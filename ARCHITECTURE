@@ -1,0 +1,98 @@
+fleet-ops-app/
+├── supabase/                    # Database layer
+│   ├── migrations/              # SQL migration files
+│   ├── functions/               # PostgreSQL functions
+│   └── policies/                # RLS policies
+│
+├── api/                         # Vercel Serverless Functions
+│   ├── wialon/                  # Wialon proxy endpoints
+│   │   ├── auth.js              # Token management
+│   │   ├── units.js             # Get fleet positions
+│   │   └── drivers.js           # Get driver info
+│   ├── dispatches/              # Dispatch CRUD
+│   │   ├── create.js
+│   │   ├── update.js
+│   │   └── list.js
+│   └── webhooks/                # Optional: Wialon webhooks
+│
+├── src/                         # Frontend source
+│   ├── lib/                     # Shared utilities
+│   │   ├── supabaseClient.js    # Supabase client init
+│   │   ├── wialonService.js     # Wialon API wrapper
+│   │   ├── routingService.js    # OSRM routing
+│   │   └── utils.js             # Helpers
+│   │
+│   ├── components/              # Reusable UI components
+│   │   ├── ui/                  # Base components (Button, Card, etc.)
+│   │   ├── map/                 # Map-related components
+│   │   ├── fleet/               # Fleet cards, tables
+│   │   ├── dispatch/            # Dispatch forms, queue
+│   │   └── layout/              # Header, Sidebar, Footer
+│   │
+│   ├── features/                # Feature modules (domain-driven)
+│   │   ├── auth/                # Authentication
+│   │   │   ├── LoginPage.jsx
+│   │   │   └── useAuth.js
+│   │   │
+│   │   ├── dashboard/           # Dashboard view
+│   │   │   ├── DashboardPage.jsx
+│   │   │   └── StatsCards.jsx
+│   │   │
+│   │   ├── dispatch/            # Dispatch workflow
+│   │   │   ├── DispatchPage.jsx
+│   │   │   ├── DispatchForm.jsx
+│   │   │   ├── QueuePanel.jsx
+│   │   │   └── useDispatches.js # Dispatch state/logic
+│   │   │
+│   │   ├── monitoring/          # Live fleet monitoring
+│   │   │   ├── MonitoringPage.jsx
+│   │   │   ├── FleetMap.jsx
+│   │   │   ├── TruckCard.jsx
+│   │   │   └── useFleetLive.js  # Live polling hook
+│   │   │
+│   │   ├── active-runs/         # Active runs view
+│   │   │   ├── ActiveRunsPage.jsx
+│   │   │   ├── RunCard.jsx
+│   │   │   └── useActiveRuns.js
+│   │   │
+│   │   ├── history/             # Run history
+│   │   │   ├── HistoryPage.jsx
+│   │   │   └── useHistory.js
+│   │   │
+│   │   ├── notifications/       # Notifications center
+│   │   │   ├── NotificationsPage.jsx
+│   │   │   └── useNotifications.js
+│   │   │
+│   │   ├── geofences/           # Geofence management
+│   │   │   ├── GeofencesPage.jsx
+│   │   │   ├── KMLImporter.jsx
+│   │   │   └── useGeofences.js
+│   │   │
+│   │   └── settings/            # App configuration
+│   │       ├── SettingsPage.jsx
+│   │       └── useSettings.js
+│   │
+│   ├── hooks/                   # Global hooks
+│   │   ├── useRealtime.js       # Supabase Realtime subscriptions
+│   │   └── useDebounce.js
+│   │
+│   └── pages/                   # Next.js/Vercel pages (if using Next.js)
+│       ├── index.js             # Dashboard (redirect to /dashboard)
+│       ├── login.js
+│       ├── dashboard.js
+│       ├── dispatch.js
+│       ├── monitoring.js
+│       ├── active-runs.js
+│       ├── history.js
+│       ├── notifications.js
+│       ├── geofences.js
+│       └── settings.js
+│
+├── public/                      # Static assets
+│   ├── icons/
+│   └── images/
+│
+├── package.json
+├── vercel.json                  # Vercel config
+├── .env.local.example           # Environment template
+└── README.md

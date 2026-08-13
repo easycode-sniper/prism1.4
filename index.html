@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMD Fleet Route Verification</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/styles/main.css">
+
+    <style>
+        /* ---------- Login screen (shown before authentication) ---------- */
+        #login-screen{ position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
+            background:linear-gradient(160deg, #0a0a14 0%, #12121f 55%, #191929 100%); padding:20px; }
+        #login-card{ width:100%; max-width:380px; background:var(--panel); border:1px solid var(--line); border-radius:14px;
+            padding:32px 28px; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+        #login-card .brand-mark{ margin:0 auto 14px; text-align:center; }
+        #login-card img{ width:64px; height:64px; }
+        #login-card h1{ font-family:'IBM Plex Mono', monospace; font-size:1.1rem; text-align:center; }
+        #login-card p.sub{ color:var(--text-dim); font-size:.78rem; text-align:center; margin:6px 0 20px; }
+        #login-card .form-group{ margin-bottom:14px; }
+        #login-card input{ width:100%; }
+        #login-card .login-error{ color:var(--red); font-size:.8rem; margin-top:10px; min-height:18px; text-align:center; }
+        #login-card button.action-btn{ margin-top:6px; }
+        #login-card .login-hint{ color:var(--text-dim); font-size:.72rem; margin-top:16px; text-align:center; line-height:1.5; }
+
+        /* ---------- Hidden utility ---------- */
+        .hidden{ display:none !important; }
+        #app-shell-holder{ height:100vh; width:100vw; }
+        /* The legacy layout assumes #app-shell is a direct flex column child of body. */
+        body:has(#app-shell) #app-shell, #app-shell-holder #app-shell{ display:flex; flex-direction:column; height:100vh; width:100vw; }
+
+        /* Admin tab looks distinct */
+        .tab-btn[data-view="admin"]{ border:1px solid var(--line); }
+    </style>
+</head>
+<body>
+
+    <!-- Login overlay -->
+    <div id="login-screen">
+        <div id="login-card">
+            <div class="brand-mark"><img src="/assets/omd-logo.png" alt="OMD logo"></div>
+            <h1>Fleet Route Monitor</h1>
+            <p class="sub">Sign in to continue</p>
+
+            <div class="form-group">
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" placeholder="you@omd.co.dz" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+            </div>
+
+            <button id="login-btn" class="action-btn">Sign in</button>
+            <div class="login-error" id="login-error"></div>
+            <p class="login-hint" id="login-hint">Sign in with your OMD fleet account.</p>
+        </div>
+    </div>
+
+    <!-- App shell holder — populated by main.js once authenticated -->
+    <div id="app-shell-holder"></div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>

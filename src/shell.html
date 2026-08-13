@@ -1,0 +1,565 @@
+<div id="app-shell">
+    <div id="topbar">
+        <div class="brand">
+            <div class="brand-mark"><img src="assets/omd-logo.png" alt="OMD Transport &amp; Logistics logo"></div>
+            <div>
+                <h1 data-i18n="brand.title">Fleet Route Monitor</h1>
+                <span data-i18n="brand.subtitle">OMD Transport &middot; Amouda Line</span>
+            </div>
+        </div>
+
+        <div id="tabs">
+            <button class="tab-btn" data-view="dashboard" data-i18n="nav.dashboard">🏠 Dashboard</button>
+            <button class="tab-btn active" data-view="dispatch" data-i18n="nav.dispatch">🗺️ Dispatch</button>
+            <button class="tab-btn" data-view="monitoring" data-i18n="nav.monitoring">🔎 Monitoring</button>
+            <button class="tab-btn" data-view="queue" data-i18n="nav.queue">📋 Queue</button>
+            <button class="tab-btn" data-view="fleet" data-i18n="nav.fleet">📊 Active Fleet</button>
+            <button class="tab-btn" data-view="history" data-i18n="nav.history">📜 History</button>
+            <button class="tab-btn" data-view="notifications" data-i18n="nav.notifications">🔔 Notifications</button>
+            <button class="tab-btn" data-view="settings" data-i18n="nav.settings">⚙️ Settings</button>
+            <button class="tab-btn" data-view="admin" data-perm="admin" style="border:1px solid var(--line);">🛡️ Admin</button>
+        </div>
+
+        <div id="topbar-stats">
+            <span id="topbar-live-stats" style="color:var(--text-dim);"></span>
+            <span>Active: <strong id="topbar-active-count">0</strong> / <span id="topbar-fleet-total">—</span></span>
+            <span class="ops-divider" style="width:1px; height:18px; background:var(--line); display:inline-block;"></span>
+            <span id="topbar-user" style="display:inline-flex; align-items:center; gap:8px;">
+                <span id="user-chip" style="font-size:.78rem; color:var(--text); background:var(--panel-3); border:1px solid var(--line); border-radius:8px; padding:5px 10px;"><span id="user-email">—</span> · <span id="user-role">—</span></span>
+                <button id="logout-btn" class="icon-btn" title="Sign out" style="width:30px; height:30px; font-size:.9rem; background:var(--panel-2); color:var(--text-dim);">⏻</button>
+            </span>
+        </div>
+    </div>
+
+    <div id="operations-strip" aria-label="Operational status">
+        <div class="ops-item"><span class="ops-dot" id="ops-live-dot"></span><span id="ops-live-label">Live tracking paused</span></div>
+        <span class="ops-divider"></span>
+        <div class="ops-item">Active runs <strong id="ops-active-count">0</strong></div>
+        <div class="ops-item alert">Off route <strong id="ops-offroute-count">0</strong></div>
+        <span class="ops-divider"></span>
+        <div class="ops-item">Last update <strong id="ops-last-update">Not yet synced</strong></div>
+    </div>
+
+    <div id="view-container">
+
+        <!-- ================= DASHBOARD VIEW ================= -->
+        <div id="view-dashboard" class="view">
+            <div id="fleet-header">
+                <div>
+                    <h2>Dashboard</h2>
+                    <p id="dash-connection-status">—</p>
+                    <p id="dash-poll-status" style="font-size:.78rem; color:var(--text-dim); margin-top:2px;"></p>
+                </div>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi-card"><div class="kpi-value" id="dash-total">—</div><div class="kpi-label">Total fleet</div></div>
+                <div class="kpi-card green"><div class="kpi-value" id="dash-moving">0</div><div class="kpi-label">Moving</div></div>
+                <div class="kpi-card" style="color:#22d3ee;"><div class="kpi-value" id="dash-idle" style="color:#22d3ee;">0</div><div class="kpi-label">Idle</div></div>
+                <div class="kpi-card"><div class="kpi-value" id="dash-offline">0</div><div class="kpi-label">Offline</div></div>
+                <div class="kpi-card amber"><div class="kpi-value" id="dash-active-count">0</div><div class="kpi-label">Active dispatches</div></div>
+            </div>
+
+            <div class="dash-two-col" style="margin-top:16px;">
+                <div class="dash-panel">
+                    <h3>Fleet Status Distribution</h3>
+                    <div class="dash-chart-container">
+                        <canvas id="fleet-status-chart"></canvas>
+                    </div>
+                </div>
+                <div class="dash-panel">
+                    <h3>Geofence Occupancy</h3>
+                    <div class="dash-chart-container">
+                        <canvas id="geofence-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dash-two-col" style="margin-top:16px;">
+                <div class="dash-panel">
+                    <h3>Fuel Stop Analysis</h3>
+                    <div class="dash-chart-container">
+                        <canvas id="fuel-stop-chart"></canvas>
+                    </div>
+                </div>
+                <div class="dash-panel">
+                    <h3>Alert Types Distribution</h3>
+                    <div class="dash-chart-container">
+                        <canvas id="alert-types-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dash-two-col">
+                <div class="dash-panel">
+                    <h3>Active dispatches</h3>
+                    <div id="dash-active-list"></div>
+                </div>
+                <div class="dash-panel">
+                    <h3>Latest notifications</h3>
+                    <div id="dashboard-latest-notifs"></div>
+                </div>
+            </div>
+
+            <div class="dash-panel" style="margin-top:16px;">
+                <h3>Driver ratings <span style="font-weight:400; color:var(--text-dim); font-size:.75rem;">— % of runs with no route deviation and no speeding over 90km/h</span></h3>
+                <table>
+                    <thead><tr><th>Driver</th><th>Total runs</th><th>Deviations</th><th>Speeding (&gt;90km/h)</th><th>Score</th></tr></thead>
+                    <tbody id="dash-driver-ratings-tbody"></tbody>
+                </table>
+                <div id="dash-ratings-empty" style="padding:30px; text-align:center; color:var(--text-dim);">No completed runs yet — ratings build up as runs finish.</div>
+            </div>
+        </div>
+
+        <!-- ================= MONITORING VIEW ================= -->
+        <div id="view-monitoring" class="view">
+            <div id="fleet-header">
+                <div>
+                    <h2>Monitoring</h2>
+                    <p>Search and filter every truck in the fleet, dispatched or not</p>
+                </div>
+                <span id="monitoring-count" style="color:var(--text-dim); font-family:'IBM Plex Mono', monospace; font-size:.85rem;">0 / 0</span>
+            </div>
+
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+                <input type="text" id="monitoring-search" class="search-input" style="max-width:280px;" placeholder="Search driver or truck ID...">
+                <button class="monitoring-filter-btn active" data-filter="all">All</button>
+                <button class="monitoring-filter-btn" data-filter="dispatched">Dispatched</button>
+                <button class="monitoring-filter-btn" data-filter="moving">Moving</button>
+                <button class="monitoring-filter-btn" data-filter="idle">Idle</button>
+                <button class="monitoring-filter-btn" data-filter="offline">Offline</button>
+            </div>
+
+            <div id="monitoring-table-wrap">
+                <table>
+                    <thead><tr>
+                        <th>Truck</th><th>Driver</th><th>Status</th><th>Speed</th><th>Destination</th><th>Updated</th><th></th>
+                    </tr></thead>
+                    <tbody id="monitoring-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ================= DISPATCH VIEW ================= -->
+        <div id="view-dispatch" class="view active">
+            <button id="floating-menu-btn" class="icon-btn" title="Show panel">☰</button>
+
+            <aside id="sidebar">
+                <div style="display:flex; justify-content:flex-end;">
+                    <button id="close-sidebar-btn" class="icon-btn" title="Hide panel">◀</button>
+                </div>
+
+                <div class="live-fleet-panel">
+                    <button id="live-tracking-toggle-btn" class="action-btn secondary">📡 Live Fleet OFF</button>
+                    <div class="live-fleet-filters">
+                        <label><input type="checkbox" id="filter-dispatched" checked> <span data-i18n="sidebar.filterDispatched">Dispatched</span></label>
+                        <label><input type="checkbox" id="filter-idle"> <span data-i18n="sidebar.filterIdle">Idle</span></label>
+                        <label><input type="checkbox" id="filter-offline"> <span data-i18n="sidebar.filterOffline">Offline</span></label>
+                        <label><input type="checkbox" id="filter-all"> <span data-i18n="sidebar.filterAll">All</span></label>
+                    </div>
+                    <input type="text" id="live-fleet-search" class="search-input" data-i18n="sidebar.searchPlaceholder" placeholder="Search driver or truck ID...">
+                    <div id="live-fleet-list"></div>
+                </div>
+
+                <hr>
+
+                <section class="workflow-step" id="workflow-step-trucks">
+                    <div class="section-label"><span class="num">1</span> <span data-i18n="sidebar.step1">Select Truck(s)</span></div>
+                    <div class="form-group">
+                        <input type="text" id="truck-search" class="search-input" data-i18n="sidebar.truckSearchPlaceholder" placeholder="Type truck ID to filter...">
+                        <div id="truck-list"></div>
+                        <div class="convoy-chips" id="convoy-chips"></div>
+                        <div class="workflow-summary" id="truck-selection-summary">Select one or more trucks to build a convoy.</div>
+                    </div>
+                </section>
+
+                <section class="workflow-step" id="workflow-step-route">
+                    <div class="section-label"><span class="num">2</span> <span data-i18n="sidebar.step2">Route</span></div>
+                    <div class="form-group">
+                        <label for="factory-select" data-i18n="sidebar.startingFactory">Starting factory</label>
+                        <select id="factory-select">
+                            <option value="amouda">Usine Amouda Ciment (El Baida)</option>
+                        </select>
+
+                        <label for="site-search" data-i18n="sidebar.destination">Destination — client or site name</label>
+                        <input type="text" id="site-search" class="search-input" data-i18n="sidebar.destinationSearchPlaceholder" placeholder="Type client name or town...">
+                        <select id="site-select" size="6">
+                            <option value="">-- Select Destination Site --</option>
+                        </select>
+                        <div class="workflow-summary" id="route-selection-summary">Choose a destination to prepare the route.</div>
+
+                        <button id="start-btn" class="action-btn" data-i18n="sidebar.startBtn">&#9654; Start Tracking Run</button>
+                    </div>
+                </section>
+
+                <hr>
+
+                <section class="workflow-step" id="workflow-step-verify">
+                <div class="section-label"><span class="num">3</span> <span data-i18n="sidebar.step3">Verify Position</span></div>
+                <div class="form-group">
+                    <label for="active-trucks" data-i18n="sidebar.activeRun">Active run</label>
+                    <select id="active-trucks">
+                        <option value="">-- Select Monitored Truck --</option>
+                    </select>
+
+                    <button id="fetch-verify-btn" class="action-btn" data-i18n="sidebar.fetchBtn">📡 Fetch Live Position &amp; Check Route</button>
+                    <div id="wialon-fetch-status" style="font-size:.76rem; min-height:16px; margin-top:2px;"></div>
+
+                    <details style="margin-top:6px;">
+                        <summary style="cursor:pointer; font-size:.78rem; color:var(--text-dim);" data-i18n="sidebar.pasteManually">Paste coordinates manually instead</summary>
+                        <div class="form-group" style="margin-top:8px;">
+                            <input type="text" id="wialon-coords" placeholder="e.g., 36.2341, 2.9845">
+                            <button id="verify-btn" class="action-btn secondary small">Check with pasted coordinates</button>
+                        </div>
+                    </details>
+                </div>
+                </section>
+
+                <button id="notify-toggle-btn" class="action-btn secondary" style="margin-top:2px;">🔕 Arrival alerts OFF</button>
+                <button id="sound-toggle-btn" class="action-btn secondary" style="margin-top:6px;">🔇 Sound OFF</button>
+                <div id="notify-status" style="font-size:.72rem; color:var(--text-dim); margin-top:2px; min-height:14px;"></div>
+
+                <div id="stats-panel">
+                    <div class="stat-line">
+                        <span>Active monitored fleet</span>
+                        <span><strong id="active-count">0</strong> / <span id="fleet-total">&mdash;</span></span>
+                    </div>
+                    <div class="stat-sub">Green = on route &middot; OMD red = off route &middot; amber = route pending &middot; purple outline = real factory zone (Wialon)</div>
+                </div>
+            </aside>
+
+            <main id="map-viewport">
+                <div id="layer-toggle">
+                    <button id="layer-btn-dark" class="layer-btn active" title="Dark map">🌑 Dark</button>
+                    <button id="layer-btn-satellite" class="layer-btn" title="Satellite imagery">🛰️ Satellite</button>
+                    <span style="width:1px; background:var(--line); margin:2px 2px;"></span>
+                    <button id="layer-btn-geofences" class="layer-btn active" title="Show/hide geofence zones">📍 Zones</button>
+                    <button id="layer-btn-names" class="layer-btn active" title="Show/hide driver name labels">🏷️ Names</button>
+                    <button id="layer-btn-gasstations" class="layer-btn" title="Show/hide gas stations">⛽ Gas</button>
+                </div>
+            </main>
+        </div>
+
+        <!-- ================= ACTIVE FLEET VIEW ================= -->
+        <div id="view-fleet" class="view">
+            <div id="fleet-header">
+                <div>
+                    <h2>Active Fleet</h2>
+                    <p>All trucks currently dispatched and their verification status</p>
+                </div>
+                <button id="fleet-refresh-btn" class="action-btn small secondary" style="width:auto;">↻ Refresh</button>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-value" id="kpi-active">0</div>
+                    <div class="kpi-label">Active runs</div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-value" id="kpi-verified">0</div>
+                    <div class="kpi-label">Verified today</div>
+                </div>
+                <div class="kpi-card amber">
+                    <div class="kpi-value" id="kpi-unverified">0</div>
+                    <div class="kpi-label">Awaiting first check</div>
+                </div>
+                <div class="kpi-card red">
+                    <div class="kpi-value" id="kpi-offroute">0</div>
+                    <div class="kpi-label">Off route</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="kpi-fleet">—</div>
+                    <div class="kpi-label">Total fleet size</div>
+                </div>
+            </div>
+
+            <div id="fleet-table-wrap">
+                <table id="fleet-table">
+                    <thead>
+                        <tr>
+                            <th>Truck</th>
+                            <th>Client</th>
+                            <th>Destination</th>
+                            <th>Status</th>
+                            <th>ETA</th>
+                            <th>Last update</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="fleet-tbody"></tbody>
+                </table>
+                <div id="fleet-empty" style="display:none;">
+                    <div class="big">🛰️</div>
+                    <div>No trucks are being tracked yet.</div>
+                    <div style="font-size:.8rem; margin-top:4px;">Dispatch a run from the Dispatch tab to see it here.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= HISTORY VIEW ================= -->
+        <div id="view-history" class="view">
+            <div id="fleet-header">
+                <div>
+                    <h2>History</h2>
+                    <p>Completed runs — everything that's been stopped from Active Fleet</p>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button id="history-export-csv-btn" class="action-btn small secondary" style="width:auto;">⬇️ Export CSV (today)</button>
+                    <button id="history-print-btn" class="action-btn small secondary" style="width:auto;">🖨️ Print summary (today)</button>
+                </div>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-value" id="history-total-today">0</div>
+                    <div class="kpi-label">Completed today</div>
+                </div>
+                <div class="kpi-card red">
+                    <div class="kpi-value" id="history-deviations-today">0</div>
+                    <div class="kpi-label">Had a deviation today</div>
+                </div>
+                <div class="kpi-card amber">
+                    <div class="kpi-value" id="history-speeding-today">0</div>
+                    <div class="kpi-label">Exceeded 90km/h today</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="history-factory-today">0</div>
+                    <div class="kpi-label">Returned to factory today</div>
+                </div>
+            </div>
+
+            <div id="history-table-wrap">
+                <table id="history-table">
+                    <thead>
+                        <tr>
+                            <th>Truck</th>
+                            <th>Client</th>
+                            <th>Destination</th>
+                            <th>Driver</th>
+                            <th>Dispatched</th>
+                            <th>Stopped</th>
+                            <th>Duration</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody"></tbody>
+                </table>
+                <div id="history-empty" style="padding:50px 20px; text-align:center; color:var(--text-dim);">
+                    No completed runs yet — stopped runs from Active Fleet will show up here.
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= NOTIFICATIONS LOG VIEW ================= -->
+        <div id="view-notifications" class="view">
+            <div id="fleet-header">
+                <div>
+                    <h2>Notifications</h2>
+                    <p>Every alert fired this session — off-route, site arrivals, factory returns</p>
+                </div>
+            </div>
+            <div id="notiflog-table-wrap">
+                <table>
+                    <thead><tr><th>Time</th><th>Type</th><th>Truck</th><th>Message</th></tr></thead>
+                    <tbody id="notiflog-tbody"></tbody>
+                </table>
+                <div id="notiflog-empty" style="padding:50px 20px; text-align:center; color:var(--text-dim);">
+                    No notifications fired yet this session.
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= WIALON TEST VIEW ================= -->
+        <!-- ================= SETTINGS VIEW ================= -->
+        <div id="view-settings" class="view">
+            <div style="max-width:640px; margin:0 auto; padding-top:20px; padding-bottom:40px;">
+                <div id="fleet-header">
+                    <div>
+                        <h2 data-i18n="settings.title">Settings</h2>
+                        <p data-i18n="settings.subtitle">Appearance, language, Wialon connection, and site/geofence data — everything you configure once and rarely touch.</p>
+                    </div>
+                </div>
+
+                <div class="section-label" style="margin-bottom:10px;" data-i18n="settings.appearance">🎨 Appearance</div>
+                <div id="theme-toggle" style="margin-bottom:22px;">
+                    <button class="theme-btn active" data-theme="dark" title="Dark theme">🌙 Dark</button>
+                    <button class="theme-btn" data-theme="light" title="Light theme">☀️ Light</button>
+                    <button class="theme-btn" data-theme="black" title="Black theme">⚫ Black</button>
+                </div>
+
+                <div class="section-label" style="margin-bottom:10px;" data-i18n="settings.language">🌐 Language</div>
+                <div id="language-toggle" style="margin-bottom:10px;">
+                    <button class="lang-btn active" data-lang="en">English</button>
+                    <button class="lang-btn" data-lang="fr">Français</button>
+                    <button class="lang-btn" data-lang="ar">العربية</button>
+                </div>
+                <div id="language-note" style="font-size:.75rem; color:var(--text-dim); margin-bottom:22px;"></div>
+
+                <hr style="margin:22px 0;">
+
+                <div class="section-label" style="margin-bottom:10px;" data-i18n="settings.wialon">🔌 Wialon Connection</div>
+                <div id="wialon-admin-section" data-perm="admin">
+                    <p style="font-size:.82rem; color:var(--text-dim); margin-bottom:12px;">Entered once here by an admin and stored on the server — every logged-in user reuses these settings automatically, so nobody re-enters the token on login.</p>
+                    <div class="form-group">
+                        <label for="wialon-relay">Relay URL <span style="color:var(--text-dim); font-weight:400;">(Cloudflare Worker — bypasses the CORS block)</span></label>
+                        <input type="text" id="wialon-relay" placeholder="https://wialon-relay1.your-worker.workers.dev">
+
+                        <label for="wialon-server">Wialon server</label>
+                        <input type="text" id="wialon-server" value="hst-api.wialon.eu">
+
+                        <label for="wialon-token">API token</label>
+                        <input type="password" id="wialon-token" placeholder="Paste your Wialon token here">
+
+                        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+                            <button id="wialon-test-btn" class="action-btn" data-i18n="settings.testConnection">Test Connection</button>
+                            <button id="wialon-save-btn" class="action-btn secondary" data-i18n="settings.saveWialon">Save Wialon settings</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="wialon-viewer-note" style="display:none; font-size:.82rem; color:var(--text-dim); padding:10px; border:1px solid var(--line); border-radius:8px;">
+                    The Wialon connection is already configured for the whole team. Only an Admin can change it here.
+                </div>
+                <div id="wialon-test-result" style="margin-top:20px;"></div>
+
+                <hr style="margin:22px 0;">
+
+                <div class="section-label" style="margin-bottom:10px;" data-i18n="settings.sites">📍 Sites &amp; Geofences</div>
+
+                <div class="section-label" style="margin-bottom:10px; margin-top:14px;" data-i18n="settings.addSite">➕ Add a new site</div>
+                <div class="form-group">
+                    <label for="manual-site-client">Client name</label>
+                    <input type="text" id="manual-site-client" placeholder="e.g. EL BAYRAK EQUIPE 1 MATIN">
+
+                    <label for="manual-site-name">Site / destination name</label>
+                    <input type="text" id="manual-site-name" placeholder="e.g. ANNABA">
+
+                    <label for="manual-site-coords">Coordinates</label>
+                    <input type="text" id="manual-site-coords" placeholder="e.g. 36.6417633, 3.2927783">
+
+                    <button id="manual-site-save-btn" class="action-btn" style="margin-top:8px;" data-i18n="settings.saveSite">Save site</button>
+                </div>
+                <div id="manual-site-result" style="margin-top:10px;"></div>
+
+                <hr style="margin:22px 0;">
+
+                <div class="section-label" style="margin-bottom:10px;" data-i18n="settings.bulkImport">📦 Bulk import from Wialon (KML)</div>
+                <div class="form-group">
+                    <label for="geofence-file-input">Upload KML file(s)</label>
+                    <input type="file" id="geofence-file-input" accept=".kml" multiple>
+
+                    <label for="geofence-paste-area" style="margin-top:10px;">...or paste KML content directly</label>
+                    <textarea id="geofence-paste-area" rows="6" placeholder="Paste raw KML XML here" style="font-family:'IBM Plex Mono', monospace; font-size:.8rem;"></textarea>
+                    <button id="geofence-paste-btn" class="action-btn secondary" style="margin-top:6px;">Add from pasted KML</button>
+                </div>
+
+                <div id="geofence-ingest-summary" style="margin-top:14px;"></div>
+
+                <hr style="margin:18px 0;">
+
+                <div class="section-label" style="margin-bottom:10px;" data-i18n="settings.manualSites">Manually added sites</div>
+                <div id="manual-site-list"></div>
+
+                <hr style="margin:18px 0;">
+
+                <div class="section-label" style="margin-bottom:10px;" data-i18n="settings.loadedZones">Loaded KML zones</div>
+                <div id="geofence-list"></div>
+            </div>
+        </div>
+
+        <!-- ================= DISPATCH QUEUE VIEW ================= -->
+        <div id="view-queue" class="view">
+            <div style="max-width:760px; margin:0 auto; padding-top:20px; width:100%;">
+                <div id="fleet-header">
+                    <div>
+                        <h2>Dispatch Queue</h2>
+                        <p>Build up a batch of truck → destination assignments, then dispatch all of them in one operation.</p>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-top:10px;">
+                    <div class="form-group" style="flex:1; min-width:180px;">
+                        <label for="queue-truck-select">Truck</label>
+                        <select id="queue-truck-select">
+                            <option value="">-- Select Truck --</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:2; min-width:220px;">
+                        <label for="queue-site-select">Destination</label>
+                        <select id="queue-site-select">
+                            <option value="">-- Select Destination --</option>
+                        </select>
+                    </div>
+                    <button id="queue-add-btn" class="action-btn secondary" style="width:auto; padding:10px 18px;">+ Add to Queue</button>
+                </div>
+
+                <div id="queue-table-wrap" style="margin-top:20px;">
+                    <table id="queue-table">
+                        <thead>
+                            <tr>
+                                <th>Truck</th>
+                                <th>Client</th>
+                                <th>Destination</th>
+                                <th>Driver</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="queue-tbody"></tbody>
+                    </table>
+                    <div id="queue-empty" style="padding:50px 20px; text-align:center; color:var(--text-dim);">
+                        Queue is empty — add trucks above.
+                    </div>
+                </div>
+
+                <button id="queue-start-btn" class="action-btn" style="margin-top:16px;" disabled>▶ START DISPATCH</button>
+            </div>
+        </div>
+
+        <!-- ================= ADMIN VIEW ================= -->
+        <div id="view-admin" class="view" data-perm="admin">
+            <div style="max-width:820px; margin:0 auto; padding-top:20px; width:100%;">
+                <div id="fleet-header">
+                    <div>
+                        <h2>🛡️ Admin — User Management</h2>
+                        <p>Create team accounts, assign roles, and lock out staff who leave. Separate from the fleet app itself.</p>
+                    </div>
+                </div>
+
+                <!-- Invite form -->
+                <div class="dash-panel" style="margin-bottom:16px;">
+                    <h3>➕ Invite a new user</h3>
+                    <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                        <div class="form-group" style="flex:2; min-width:200px;">
+                            <label for="admin-user-email">Email</label>
+                            <input type="email" id="admin-user-email" placeholder="driver@omd.co.dz">
+                        </div>
+                        <div class="form-group" style="flex:1; min-width:140px;">
+                            <label for="admin-user-fullname">Full name</label>
+                            <input type="text" id="admin-user-fullname" placeholder="First Last">
+                        </div>
+                        <div class="form-group" style="flex:1; min-width:120px;">
+                            <label for="admin-user-role">Role</label>
+                            <select id="admin-user-role">
+                                <option value="dispatcher">Dispatcher</option>
+                                <option value="viewer">Viewer</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <button id="admin-invite-btn" class="action-btn" style="width:auto;">Invite user</button>
+                    </div>
+                    <div id="admin-invite-result" style="margin-top:10px;"></div>
+                </div>
+
+                <!-- User list -->
+                <div class="dash-panel">
+                    <h3>👥 Team members</h3>
+                    <div id="admin-users-wrap">
+                        <div style="padding:20px; text-align:center; color:var(--text-dim);">Loading users…</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="print-summary-area"></div>

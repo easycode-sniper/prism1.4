@@ -1,0 +1,24 @@
+{
+  "name": "prism-fleet",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "OMD Fleet Route Verification — production app with Supabase auth, RBAC, and team-shared state",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "db:reset": "node scripts/reset-db.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "chart.js": "^4.4.5",
+    "leaflet": "^1.9.4",
+    "leaflet-routing-machine": "^3.2.12",
+    "leaflet.markercluster": "^1.5.3"
+  },
+  "devDependencies": {
+    "vite": "^6.4.3"
+  }
+}
